@@ -134,7 +134,7 @@ const App = () => {
 
   const fetchSessions = async (token) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/chat/sessions", {
+      const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/chat/sessions", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -152,7 +152,7 @@ const App = () => {
       return;
     }
     try {
-      const res = await fetch(`http://127.0.0.1:8000/chat/session/${id}`, {
+      const res = await fetch(`https://ai-chatbot-1-sgup.onrender.com/chat/session/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -175,7 +175,7 @@ const App = () => {
     if (!user) return;
     const token = await user.getIdToken();
     try {
-      const res = await fetch("http://127.0.0.1:8000/chat/start", {
+      const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/chat/start", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +206,7 @@ const App = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/ask", {
+      const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/ask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -226,7 +226,7 @@ const App = () => {
         setMessages((prev) => [...prev, { sender: "ai", text: data.answer }]);
         if (isFirstMessage) {
           await fetch(
-            `http://127.0.0.1:8000/chat/session/${sessionId}/update-title`,
+            `https://ai-chatbot-1-sgup.onrender.com/chat/session/${sessionId}/update-title`,
             {
               method: "POST",
               headers: {
@@ -265,7 +265,7 @@ const App = () => {
     if (!user) return;
     const token = await user.getIdToken();
     try {
-      const res = await fetch("http://127.0.0.1:8000/subscribe/", {
+      const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/subscribe/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -276,7 +276,7 @@ const App = () => {
         name: "Studytap AI",
         description: "Monthly Unlimited Access",
         handler: async () => {
-          await fetch("http://127.0.0.1:8000/update-subscription/", {
+          await fetch("https://ai-chatbot-1-sgup.onrender.com/update-subscription/", {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -299,7 +299,7 @@ const App = () => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken();
         try {
-          const res = await fetch("http://127.0.0.1:8000/get-profile", {
+          const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/get-profile", {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -327,7 +327,7 @@ const App = () => {
     if (!user) return;
     const token = await user.getIdToken();
     try {
-      const res = await fetch("http://127.0.0.1:8000/update-profile", {
+      const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/update-profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -350,7 +350,7 @@ const App = () => {
     if (!user) return;
     const token = await user.getIdToken();
     try {
-      await fetch(`http://127.0.0.1:8000/chat/session/${sessionIdToDelete}`, {
+      await fetch(`https://ai-chatbot-1-sgup.onrender.com/chat/session/${sessionIdToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
