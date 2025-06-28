@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
-const AnimatedBackground: React.FC = () => {
+const AnimatedBackground = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -17,15 +17,14 @@ const AnimatedBackground: React.FC = () => {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Reduce particle count on smaller screens
   const getParticleCount = () => {
-    if (dimensions.width < 640) return 8; // sm
-    if (dimensions.width < 1024) return 12; // md
-    return 20; // lg and above
+    if (dimensions.width < 640) return 8;
+    if (dimensions.width < 1024) return 12;
+    return 20;
   };
 
   const getParticleSize = () => {
-    if (dimensions.width < 640) return 'w-1 h-1'; // smaller on mobile
+    if (dimensions.width < 640) return 'w-1 h-1';
     return 'w-2 h-2';
   };
 
