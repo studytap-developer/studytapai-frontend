@@ -1348,7 +1348,6 @@
 
 
 // ====== bolt
-
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import firebase from "firebase/compat/app";
@@ -1367,23 +1366,26 @@ import {
   Search,
   Crown,
   Zap,
+  Volume2,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  Square,
+  GraduationCap,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { Volume2, Copy, ThumbsUp, ThumbsDown, Square } from "lucide-react";
-import { GraduationCap } from "lucide-react";
-import { onAuthStateChanged } from "firebase/auth";
 import FullScreenModal from "./components/FullScreenModal";
 import AnimatedBackground from './components/AnimatedBackground';
 
+// Firebase configuration
 firebase.initializeApp({
-      apiKey: "AIzaSyCDm_1kQ-XJlf_EjpBatI2_oYWv7sofRzU",
-    authDomain: "sign-in-5fb04.firebaseapp.com",
-  //  authDomain: "studytapai.com",
-    projectId: "sign-in-5fb04",
-    storageBucket: "sign-in-5fb04.firebasestorage.app",
-    messagingSenderId: "840402243302",
-    appId: "1:840402243302:web:e0ccda8f866c8321b27527",
-    measurementId: "G-SLTQ77RJBR"
+  apiKey: "AIzaSyCDm_1kQ-XJlf_EjpBatI2_oYWv7sofRzU",
+  authDomain: "sign-in-5fb04.firebaseapp.com",
+  projectId: "sign-in-5fb04",
+  storageBucket: "sign-in-5fb04.firebasestorage.app",
+  messagingSenderId: "840402243302",
+  appId: "1:840402243302:web:e0ccda8f866c8321b27527",
+  measurementId: "G-SLTQ77RJBR"
 });
 
 const auth = firebase.auth();
@@ -1409,6 +1411,7 @@ const LoadingDots = () => (
 );
 
 const App = () => {
+  // State management
   const [user, setUser] = useState(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -1418,23 +1421,45 @@ const App = () => {
   const [sessionId, setSessionId] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  // const [phoneNumber, setPhoneNumber] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const chatRef = useRef(null);
   const [chatStarted, setChatStarted] = useState(false);
-
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [profileUpdated, setProfileUpdated] = useState(false);
-
   const [speakingIndex, setSpeakingIndex] = useState(null);
   const [likedMessages, setLikedMessages] = useState({});
   const [dislikedMessages, setDislikedMessages] = useState({});
-
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const chatRef = useRef(null);
+
+  // Responsive breakpoint detection
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // Auto-collapse sidebar on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarCollapsed(true);
+      setMobileMenuOpen(false);
+    }
+  }, [isMobile]);
+
+  // Load Razorpay script
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -1443,6 +1468,7 @@ const App = () => {
     return () => document.body.removeChild(script);
   }, []);
 
+  // Firebase auth state listener
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (person) => {
       setUser(person || null);
@@ -1458,12 +1484,55 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const token = await user.getIdToken();
+        try {
+          const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/get-profile", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            setMobileNumber(data.phone || "");
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobile && mobileMenuOpen) {
+        const sidebar = document.getElementById('mobile-sidebar');
+        if (sidebar && !sidebar.contains(event.target)) {
+          setMobileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobile, mobileMenuOpen]);
+
+  // Authentication functions
   const signInWithGoogle = async () => {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -1482,6 +1551,7 @@ const App = () => {
     auth.signOut();
   };
 
+  // API functions
   const fetchSessions = async (token) => {
     try {
       const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/chat/sessions", {
@@ -1538,9 +1608,8 @@ const App = () => {
       localStorage.setItem("activeSessionId", data.session_id);
       setMessages([]);
       await fetchSessions(token);
-
-      // ✅ this line shows the input bar
       setChatStarted(true);
+      if (isMobile) setMobileMenuOpen(false);
     } catch (error) {
       console.error("Error starting new chat:", error);
     }
@@ -1644,35 +1713,6 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
-        try {
-          const res = await fetch("https://ai-chatbot-1-sgup.onrender.com/get-profile", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!res.ok) {
-            console.error("Failed to fetch profile:", await res.text());
-            return;
-          }
-
-          const data = await res.json();
-          console.log("Fetched profile:", data);
-          setMobileNumber(data.phone || "");
-        } catch (error) {
-          console.error("Error fetching profile:", error);
-        }
-      }
-    });
-
-    return () => unsubscribe(); // cleanup on unmount
-  }, []);
-
   const saveProfile = async () => {
     if (!user) return;
     const token = await user.getIdToken();
@@ -1715,6 +1755,7 @@ const App = () => {
     }
   };
 
+  // Landing page when user is not authenticated
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
@@ -1735,7 +1776,6 @@ const App = () => {
               transition={{ duration: 0.8, ease: "backOut" }}
               className="mb-6 sm:mb-8 lg:mb-12"
             >
-              {/* Responsive heading */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-3 sm:mb-4 lg:mb-6 bg-gradient-to-r from-white to-blue-600 bg-clip-text text-transparent leading-tight">
                 StudyTap AI
               </h1>
@@ -1749,7 +1789,6 @@ const App = () => {
               </motion.p>
             </motion.div>
 
-            {/* Sign in button with responsive sizing */}
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1770,12 +1809,8 @@ const App = () => {
         {/* Footer */}
         <footer className="relative z-10 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="max-w-4xl mx-auto">
-            {/* Divider */}
             <div className="w-full sm:w-1/2 lg:w-1/3 h-0.5 mx-auto mb-4 sm:mb-6 bg-gray-700 rounded-full" />
-
-            {/* Footer content */}
             <div className="text-center text-xs sm:text-sm text-gray-400 space-y-3 sm:space-y-4">
-              {/* Links - responsive layout */}
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={() => setShowPrivacyModal(true)}
@@ -1791,8 +1826,6 @@ const App = () => {
                   Terms & Conditions
                 </button>
               </div>
-
-              {/* Company info */}
               <p className="text-xs sm:text-sm leading-relaxed">
                 Powered by{" "}
                 <span className="font-semibold text-white">
@@ -1821,13 +1854,27 @@ const App = () => {
     );
   }
 
+  // Chat interface when user is authenticated
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="h-screen flex bg-gray-900"
+      className="h-screen flex bg-gray-900 relative overflow-hidden"
     >
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobile && mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Payment Modal */}
       <AnimatePresence>
         {showModal && (
@@ -1835,19 +1882,19 @@ const App = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50"
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50 p-4"
           >
             <motion.div
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              className="bg-white text-black p-8 rounded-2xl shadow-2xl max-w-md mx-4"
+              className="bg-white text-black p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4"
             >
-              <h2 className="text-2xl font-bold mb-4 text-center">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">
                 🚀 Unlock Unlimited Access
               </h2>
-              <p className="mb-6 text-gray-600 text-center">
+              <p className="mb-6 text-gray-600 text-center text-sm sm:text-base">
                 You've reached your free limit. Subscribe to continue your
                 learning journey!
               </p>
@@ -1856,7 +1903,7 @@ const App = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handlePayment}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
                 >
                   Pay ₹999/month
                 </motion.button>
@@ -1864,7 +1911,7 @@ const App = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowModal(false)}
-                  className="w-full px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300"
+                  className="w-full px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 text-sm sm:text-base"
                 >
                   Maybe Later
                 </motion.button>
@@ -1890,9 +1937,9 @@ const App = () => {
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
               className="bg-white text-black rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="p-8">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     Choose Your Plan
                   </h2>
                   <motion.button
@@ -1901,42 +1948,42 @@ const App = () => {
                     onClick={() => setShowPlansModal(false)}
                     className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                   >
-                    <X size={24} />
+                    <X size={20} className="sm:w-6 sm:h-6" />
                   </motion.button>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
                   {/* Free Plan */}
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="border-2 border-gray-200 rounded-2xl p-6 relative"
+                    className="border-2 border-gray-200 rounded-2xl p-4 sm:p-6 relative"
                   >
-                    <div className="text-center mb-6">
-                      <h3 className="text-2xl font-bold mb-2">Free</h3>
-                      <div className="text-4xl font-bold mb-2">₹0</div>
-                      <p className="text-gray-600">Limited access</p>
+                    <div className="text-center mb-4 sm:mb-6">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">Free</h3>
+                      <div className="text-3xl sm:text-4xl font-bold mb-2">₹0</div>
+                      <p className="text-gray-600 text-sm sm:text-base">Limited access</p>
                     </div>
-                    <ul className="space-y-3 mb-8">
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+                      <li className="flex items-center gap-3 text-sm sm:text-base">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                         </div>
-                        <span>2 questions for free trial </span>
+                        <span>2 questions for free trial</span>
                       </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <li className="flex items-center gap-3 text-sm sm:text-base">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                         </div>
                         <span>Basic AI responses</span>
                       </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <li className="flex items-center gap-3 text-sm sm:text-base">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                         </div>
                         <span className="text-gray-400">Priority support</span>
                       </li>
                     </ul>
-                    <button className="w-full py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-600 cursor-not-allowed">
+                    <button className="w-full py-2 sm:py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-600 cursor-not-allowed text-sm sm:text-base">
                       Current Plan
                     </button>
                   </motion.div>
@@ -1944,53 +1991,41 @@ const App = () => {
                   {/* Pro Plan */}
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="border-2 border-blue-500 rounded-2xl p-6 relative bg-gradient-to-br from-blue-50 to-purple-50"
+                    className="border-2 border-blue-500 rounded-2xl p-4 sm:p-6 relative bg-gradient-to-br from-blue-50 to-purple-50"
                   >
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                        <Crown size={14} />
+                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1">
+                        <Crown size={12} className="sm:w-3.5 sm:h-3.5" />
                         Most Popular
                       </div>
                     </div>
-                    <div className="text-center mb-6">
-                      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         Pro
                       </h3>
-                      <div className="text-4xl font-bold mb-2">₹999</div>
-                      <p className="text-gray-600">per month</p>
+                      <div className="text-3xl sm:text-4xl font-bold mb-2">₹999</div>
+                      <p className="text-gray-600 text-sm sm:text-base">per month</p>
                     </div>
-                    <ul className="space-y-3 mb-8">
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <Zap size={12} className="text-white" />
-                        </div>
-                        <span>Unlimited questions</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <Zap size={12} className="text-white" />
-                        </div>
-                        <span>Advanced AI responses</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <Zap size={12} className="text-white" />
-                        </div>
-                        <span>Priority support</span>
-                      </li>
-
-                      <li className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                          <Zap size={12} className="text-white" />
-                        </div>
-                        <span>Custom study plans</span>
-                      </li>
+                    <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+                      {[
+                        'Unlimited questions',
+                        'Advanced AI responses',
+                        'Priority support',
+                        'Custom study plans'
+                      ].map((feature, index) => (
+                        <li key={index} className="flex items-center gap-3 text-sm sm:text-base">
+                          <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Zap size={10} className="sm:w-3 sm:h-3 text-white" />
+                          </div>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
                     </ul>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handlePayment}
-                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+                      className="w-full py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
                     >
                       Upgrade to Pro
                     </motion.button>
@@ -2002,56 +2037,13 @@ const App = () => {
         )}
       </AnimatePresence>
 
-      {/* Profile Modal */}
-      <AnimatePresence>
-        {showProfileModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              className="bg-white text-black p-6 rounded-2xl shadow-2xl w-96 mx-4"
-            >
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Phone size={20} />
-                Update Phone Number
-              </h2>
-
-              <div className="flex justify-end gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowProfileModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-300"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={saveProfile}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300"
-                >
-                  Save
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Collapsible Sidebar */}
+      {/* Sidebar */}
       <motion.aside
-        initial={{ x: -300 }}
+        id="mobile-sidebar"
+        initial={{ x: isMobile ? -300 : 0 }}
         animate={{
-          x: 0,
-          width: sidebarCollapsed ? "60px" : "280px",
+          x: isMobile ? (mobileMenuOpen ? 0 : -300) : 0,
+          width: isMobile ? "280px" : (sidebarCollapsed ? "60px" : "280px"),
         }}
         transition={{
           duration: 0.3,
@@ -2060,9 +2052,10 @@ const App = () => {
           stiffness: 300,
           damping: 30,
         }}
-        className="bg-gray-800 text-white border-r border-gray-700 flex flex-col relative overflow-hidden"
+        className={`bg-gray-800 text-white border-r border-gray-700 flex flex-col relative overflow-hidden ${
+          isMobile ? 'fixed left-0 top-0 h-full z-50' : 'relative'
+        }`}
       >
-        {/* Sidebar Content */}
         <div className="flex flex-col h-full p-3">
           {/* Header */}
           <motion.div
@@ -2072,7 +2065,7 @@ const App = () => {
             className="mb-4"
           >
             <AnimatePresence mode="wait">
-              {!sidebarCollapsed ? (
+              {(!sidebarCollapsed || isMobile) ? (
                 <motion.div
                   key="expanded"
                   initial={{ opacity: 0, x: -20 }}
@@ -2082,7 +2075,7 @@ const App = () => {
                   className="flex items-center justify-between"
                 >
                   <div>
-                    <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                       StudyTap AI
                     </h2>
                   </div>
@@ -2092,7 +2085,13 @@ const App = () => {
                       backgroundColor: "rgb(55, 65, 81)",
                     }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setSidebarCollapsed(true)}
+                    onClick={() => {
+                      if (isMobile) {
+                        setMobileMenuOpen(false);
+                      } else {
+                        setSidebarCollapsed(true);
+                      }
+                    }}
                     className="p-1.5 rounded-lg hover:bg-gray-700 transition-all duration-300"
                   >
                     <X size={16} />
@@ -2140,7 +2139,7 @@ const App = () => {
               <Plus size={16} />
             </motion.div>
             <AnimatePresence>
-              {!sidebarCollapsed && (
+              {(!sidebarCollapsed || isMobile) && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
@@ -2156,7 +2155,7 @@ const App = () => {
 
           {/* Navigation Icons (Collapsed State) */}
           <AnimatePresence>
-            {sidebarCollapsed && (
+            {sidebarCollapsed && !isMobile && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -2196,7 +2195,7 @@ const App = () => {
           {/* Chat Sessions */}
           <div className="flex-1 overflow-hidden">
             <AnimatePresence>
-              {!sidebarCollapsed && (
+              {(!sidebarCollapsed || isMobile) && (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -2267,7 +2266,7 @@ const App = () => {
           <div className="mt-auto space-y-2">
             {/* View Plans Button */}
             <AnimatePresence>
-              {!sidebarCollapsed ? (
+              {(!sidebarCollapsed || isMobile) ? (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -2309,46 +2308,76 @@ const App = () => {
               )}
             </AnimatePresence>
           </div>
+
           {/* Sidebar Footer */}
           <div className="text-center text-[10px] text-gray-500 border-t border-gray-700 pt-2 mt-4">
-            Powered by{" "}
-            {!sidebarCollapsed && (
-              <span className="text-white font-medium">
-                Shree Gajanana Enterprises LLP
-              </span>
-            )}
+            <AnimatePresence>
+              {(!sidebarCollapsed || isMobile) ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  Powered by{" "}
+                  <span className="text-white font-medium">
+                    Shree Gajanana Enterprises LLP
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-[8px]"
+                >
+                  SGE
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </motion.aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col bg-gray-900">
+      <main className="flex-1 flex flex-col bg-gray-900 min-w-0">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="w-full px-4 py-3 border-b border-gray-700 bg-gray-800 flex justify-between items-center"
+          className="w-full px-3 sm:px-4 py-3 border-b border-gray-700 bg-gray-800 flex justify-between items-center"
         >
+          {/* Mobile Menu Button */}
+          {isMobile && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-700 transition-all duration-300 mr-3"
+            >
+              <Menu size={20} />
+            </motion.button>
+          )}
+
           {/* Title */}
-          <h1 className="text-xl font-semibold text-white">Chat</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-white">Chat</h1>
 
           {/* Right Profile Section */}
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-2 sm:gap-4 relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => {
                 setShowDropdown(!showDropdown);
-                setShowProfileForm(false); // Reset
+                setShowProfileForm(false);
                 setProfileUpdated(false);
               }}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300"
+              className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300"
             >
               <img
                 src={user.photoURL}
                 alt="Profile"
-                className="w-8 h-8 rounded-full border-2 border-gray-600"
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-gray-600"
               />
             </motion.button>
 
@@ -2360,13 +2389,13 @@ const App = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-14 w-64 bg-white text-black rounded-xl shadow-2xl z-50"
+                  className="absolute right-0 top-14 w-56 sm:w-64 bg-white text-black rounded-xl shadow-2xl z-50"
                 >
                   {!showProfileForm ? (
                     <>
                       <button
                         onClick={() => setShowProfileForm(true)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-3"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-3 text-sm sm:text-base"
                       >
                         <User size={16} />
                         Update Profile
@@ -2376,7 +2405,7 @@ const App = () => {
                           signOut();
                           setShowDropdown(false);
                         }}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-600 flex items-center gap-3"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-600 flex items-center gap-3 text-sm sm:text-base"
                       >
                         <LogOut size={16} />
                         Logout
@@ -2392,13 +2421,12 @@ const App = () => {
                       </div>
                       <div>
                         <p className="text-sm font-semibold">Email</p>
-                        <p className="text-gray-700 text-sm">{user.email}</p>
+                        <p className="text-gray-700 text-sm break-all">{user.email}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700">
                           Mobile Number
                         </label>
-
                         <input
                           type="tel"
                           inputMode="numeric"
@@ -2420,7 +2448,7 @@ const App = () => {
 
                       <button
                         onClick={async () => {
-                          await saveProfile(); // ⬅️ actually write to backend
+                          await saveProfile();
                           setProfileUpdated(true);
                           setTimeout(() => {
                             setShowDropdown(false);
@@ -2449,16 +2477,16 @@ const App = () => {
         {/* Chat Messages */}
         <div
           ref={chatRef}
-          className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"
+          className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-4 custom-scrollbar"
         >
           {messages.length === 0 && !chatStarted && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="flex justify-center items-center min-h-[70vh] w-full"
+              className="flex justify-center items-center min-h-[60vh] sm:min-h-[70vh] w-full"
             >
-              <div className="text-center flex flex-col items-center justify-center">
+              <div className="text-center flex flex-col items-center justify-center px-4">
                 <motion.div
                   animate={{
                     scale: [1, 1.05, 1],
@@ -2471,16 +2499,16 @@ const App = () => {
                   }}
                   className="mb-4"
                 >
-                  <GraduationCap className="w-12 h-12 text-white" />
+                  <GraduationCap className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                 </motion.div>
 
-                <h3 className="text-2xl font-semibold text-gray-300 mb-2">
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-300 mb-2">
                   Ready to help you study!
                 </h3>
-                <p className="text-gray-500">Ask me anything to get started</p>
+                <p className="text-gray-500 text-sm sm:text-base mb-4">Ask me anything to get started</p>
                 <button
                   onClick={startNewChat}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition mt-4"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition text-sm sm:text-base"
                 >
                   Try Now
                 </button>
@@ -2501,29 +2529,27 @@ const App = () => {
                 }`}
               >
                 <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  className={`px-6 py-4 rounded-2xl max-w-[75%] shadow-lg ${
+                  whileHover={{ scale: 1.01 }}
+                  className={`px-4 sm:px-6 py-3 sm:py-4 rounded-2xl max-w-[85%] sm:max-w-[75%] shadow-lg ${
                     msg.sender === "user"
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                       : "bg-gray-800 text-gray-100 border border-gray-700"
                   }`}
                 >
-                  <div className="prose prose-invert max-w-none">
+                  <div className="prose prose-invert max-w-none text-sm sm:text-base">
                     <ReactMarkdown>{msg.text}</ReactMarkdown>
                   </div>
 
                   {/* Icons under AI messages only */}
                   {msg.sender !== "user" && (
                     <div className="mt-3 flex flex-col items-start gap-2 text-sm text-gray-400">
-                      <div className="flex gap-4 items-center">
-                        {/* 🔊 SPEAK */}
-                        {speakingIndex !== idx && (
+                      <div className="flex gap-3 sm:gap-4 items-center flex-wrap">
+                        {/* Speak/Stop */}
+                        {speakingIndex !== idx ? (
                           <button
                             onClick={() => {
                               window.speechSynthesis.cancel();
-                              const utterance = new SpeechSynthesisUtterance(
-                                msg.text
-                              );
+                              const utterance = new SpeechSynthesisUtterance(msg.text);
                               utterance.onend = () => setSpeakingIndex(null);
                               window.speechSynthesis.speak(utterance);
                               setSpeakingIndex(idx);
@@ -2531,12 +2557,9 @@ const App = () => {
                             title="Speak"
                             className="hover:text-white transition"
                           >
-                            <Volume2 size={18} />
+                            <Volume2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                           </button>
-                        )}
-
-                        {/* 🔇 STOP */}
-                        {speakingIndex === idx && (
+                        ) : (
                           <button
                             onClick={() => {
                               window.speechSynthesis.cancel();
@@ -2545,22 +2568,20 @@ const App = () => {
                             title="Stop Speaking"
                             className="text-yellow-400 hover:text-red-500 transition"
                           >
-                            <Square size={18} />
+                            <Square size={16} className="sm:w-[18px] sm:h-[18px]" />
                           </button>
                         )}
 
-                        {/* 📋 COPY */}
+                        {/* Copy */}
                         <button
-                          onClick={() =>
-                            navigator.clipboard.writeText(msg.text)
-                          }
+                          onClick={() => navigator.clipboard.writeText(msg.text)}
                           title="Copy"
                           className="hover:text-white transition"
                         >
-                          <Copy size={18} />
+                          <Copy size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </button>
 
-                        {/* 👍 LIKE */}
+                        {/* Like */}
                         <button
                           onClick={() => {
                             setLikedMessages((prev) => ({
@@ -2577,10 +2598,10 @@ const App = () => {
                             likedMessages[idx] ? "text-green-500" : ""
                           }`}
                         >
-                          <ThumbsUp size={18} />
+                          <ThumbsUp size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </button>
 
-                        {/* 👎 DISLIKE */}
+                        {/* Dislike */}
                         <button
                           onClick={() => {
                             setDislikedMessages((prev) => ({
@@ -2597,7 +2618,7 @@ const App = () => {
                             dislikedMessages[idx] ? "text-red-500" : ""
                           }`}
                         >
-                          <ThumbsDown size={18} />
+                          <ThumbsDown size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </button>
                       </div>
                     </div>
@@ -2613,28 +2634,29 @@ const App = () => {
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-start"
             >
-              <div className="px-6 py-4 rounded-2xl bg-gray-800 border border-gray-700">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 rounded-2xl bg-gray-800 border border-gray-700">
                 <LoadingDots />
               </div>
             </motion.div>
           )}
         </div>
 
+        {/* Input Footer */}
         {chatStarted && (
           <motion.footer
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="p-6 border-t border-gray-700 bg-gray-800"
+            className="p-3 sm:p-4 lg:p-6 border-t border-gray-700 bg-gray-800"
           >
-            <div className="flex items-center gap-4 max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 sm:gap-4 max-w-4xl mx-auto">
               <div className="flex-1 relative">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className="w-full px-6 py-4 bg-gray-700 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gray-700 border border-gray-600 rounded-xl sm:rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
                   placeholder="Ask your question..."
                   disabled={loading}
                 />
@@ -2644,9 +2666,9 @@ const App = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
-                <Send size={20} />
+                <Send size={18} className="sm:w-5 sm:h-5" />
               </motion.button>
             </div>
           </motion.footer>
@@ -2675,11 +2697,19 @@ const App = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background-color: rgb(107, 114, 128);
         }
+
+        @media (max-width: 640px) {
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+        }
       `}</style>
     </motion.div>
   );
 };
 
 export default App;
+
+
 
 
