@@ -152,14 +152,33 @@ const LandingPage = ({ signInWithGoogle }) => {
           </h1>
 
           {/* Subheading - responsive */}
-          <motion.p
+          {/* <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
             className=" md:text-1xl lg:text-2xl sm:text-4xl  text-white mb-8"
           >
-            Your intelligent study companion
-          </motion.p>
+            Your intelligent study companion 
+            Built for B.Tech students across all branches.
+          </motion.p> */}
+ <motion.p
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.5, duration: 0.8 }}
+  className="md:text-xl lg:text-2xl sm:text-4xl text-white mb-2 text-center"
+>
+  Your intelligent study companion
+</motion.p>
+
+<motion.p
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.8, duration: 0.8 }}
+  className="md:text-md lg:text-lg sm:text-2xl text-gray-300 text-center mb-5"
+>
+  Built for B.Tech students across all branches.
+</motion.p>
+
 
           <button
              onClick={signInWithGoogle}
