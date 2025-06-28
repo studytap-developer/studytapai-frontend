@@ -220,7 +220,7 @@ const LandingPage = ({ signInWithGoogle }) => {
                 onClick={() => setShowTermsModal(true)}
                 className="hover:underline hover:text-white transition px-2 py-1"
               >
-                Terms & Conditions
+                Terms & Conditions.
               </button>
             </div>
 
