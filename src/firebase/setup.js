@@ -19,7 +19,7 @@ import
 // ✅ Initialize Firebase BEFORE using any firebase.auth()
 const firebaseConfig = {
     apiKey: "AIzaSyCDm_1kQ-XJlf_EjpBatI2_oYWv7sofRzU",
-    authDomain: "studytapai.com",
+     authDomain: "sign-in-5fb04.firebaseapp.com",
     projectId: "sign-in-5fb04",
     storageBucket: "sign-in-5fb04.firebasestorage.app",
     messagingSenderId: "840402243302",
