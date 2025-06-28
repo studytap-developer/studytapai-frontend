@@ -162,7 +162,7 @@ const LandingPage = ({ signInWithGoogle }) => {
           </motion.p>
 
           <button
-            onClick={signInWithGoogle}
+             onClick={signInWithGoogle}
             className="text-base px-4 py-2 sm:text-2xl sm:px-10 sm:py-5 md:text-3xl md:px-12 md:py-6 lg:text-lg lg:px-6 lg:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-bold transition-all duration-300 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-xl w-full sm:w-auto max-w-xs sm:max-w-sm md:max-w-md mx-auto"
           >
             Sign in with Google
@@ -213,7 +213,7 @@ const LandingPage = ({ signInWithGoogle }) => {
                 onClick={() => setShowPrivacyModal(true)}
                 className="hover:underline hover:text-white transition px-2 py-1"
               >
-                Privacy Policy
+                Privacy Policy.
               </button>
               <span className="hidden sm:inline text-gray-500">|</span>
               <button
